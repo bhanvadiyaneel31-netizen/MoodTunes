@@ -19,3 +19,4 @@ pgdata/
 htmlcov/
 .coverage
 test.db
+!ml/weights/emotion_cnn.pth
