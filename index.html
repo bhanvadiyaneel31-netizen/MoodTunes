@@ -509,7 +509,7 @@ function connectWebSocket(){
   ws=new WebSocket(WS_URL);
   ws.onopen=()=>{
     updateWSStatus(true);
-    captureInterval=setInterval(captureAndSend,333);
+    captureInterval=setInterval(captureAndSend,1000);
   };
   ws.onmessage=(e)=>{
     const data=JSON.parse(e.data);
