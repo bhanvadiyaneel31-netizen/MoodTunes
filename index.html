@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MoodTunes</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0e0e13;--surface:#0e0e13;--surface-low:#131319;--surface-container:#19191f;
+--surface-high:#1f1f26;--surface-highest:#25252d;--surface-bright:#2c2b33;
+--primary:#b6a0ff;--primary-container:#a98fff;--on-primary:#340090;
+--secondary:#00e3fd;--secondary-container:#006875;
+--tertiary:#ffe483;--error:#ff6e84;
+--on-surface:#f9f5fd;--on-surface-variant:#acaab1;--outline:#76747b;--outline-variant:#48474d;
+--glass-bg:rgba(37,37,45,0.4);--glass-border:rgba(72,71,77,0.15);
+}
+body{background:var(--bg);color:var(--on-surface);font-family:'Manrope',sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}button{font-family:inherit;cursor:pointer}
+.hl{font-family:'Space Grotesk',sans-serif}.lb{font-family:'Space Grotesk',sans-serif}
+.glass{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px}
+.btn-grad{background:linear-gradient(90deg,var(--primary),var(--secondary));color:var(--on-primary);border:none;padding:12px 24px;border-radius:14px;font-weight:700;font-size:14px;transition:transform 0.15s;display:inline-flex;align-items:center;gap:8px}
+.btn-grad:hover{transform:scale(1.05)}.btn-grad:active{transform:scale(0.95)}
+.btn-grad:disabled{opacity:0.5;transform:none;cursor:not-allowed}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{display:none;flex-direction:column;width:260px;height:100vh;position:sticky;top:0;background:rgba(19,19,25,0.6);backdrop-filter:blur(60px);border-right:1px solid rgba(72,71,77,0.1);padding:24px;z-index:50}
+@media(min-width:768px){.sidebar{display:flex}}
+.s-logo{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+.s-logo-icon{width:40px;height:40px;border-radius:10px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;color:var(--on-primary);font-weight:700;font-size:18px}
+.s-logo h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.05em;line-height:1.1}
+.s-logo span{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--on-surface-variant)}
+.s-nav{flex:1;display:flex;flex-direction:column;gap:6px}
+.s-nav a{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:9999px;color:#9ca3af;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s}
+.s-nav a:hover{color:#fff}
+.s-nav a.active{background:rgba(182,160,255,0.2);color:var(--primary);box-shadow:0 0 15px rgba(182,160,255,0.3)}
+.main-wrap{flex:1;display:flex;flex-direction:column;position:relative}
+.page{display:none;padding:80px 20px 150px;max-width:1200px;margin:0 auto;width:100%}
+.page.active{display:block}
+@media(min-width:768px){.page{padding:32px 40px 40px}}
+
+/* Mobile header */
+.m-header{display:flex;position:fixed;top:0;left:0;width:100%;z-index:50;background:rgba(14,14,19,0.8);backdrop-filter:blur(20px);justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(72,71,77,0.1)}
+@media(min-width:768px){.m-header{display:none}}
+
+/* Bottom nav */
+.b-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(14,14,19,0.8);backdrop-filter:blur(60px);border-top:1px solid rgba(72,71,77,0.1);justify-content:space-around;padding:6px 4px}
+@media(min-width:768px){.b-nav{display:none}}
+.b-nav a{display:flex;flex-direction:column;align-items:center;padding:10px 14px;border-radius:9999px;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;gap:2px;transition:all 0.2s}
+.b-nav a.active{background:rgba(182,160,255,0.2);color:var(--primary)}
+
+/* ═══ AUTH MODAL ═══ */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-overlay.hidden{display:none}
+.auth-card{width:100%;max-width:400px;padding:40px;border-radius:24px}
+.auth-card h2{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
+.auth-card p{color:var(--on-surface-variant);font-size:14px;margin-bottom:28px}
+.auth-card input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);font-size:14px;margin-bottom:14px;outline:none;font-family:inherit}
+.auth-card input:focus{border-color:var(--primary)}
+.auth-card .btn-grad{width:100%;justify-content:center;padding:16px;font-size:15px;margin-top:8px}
+.auth-card .switch{text-align:center;margin-top:20px;font-size:13px;color:var(--on-surface-variant)}
+.auth-card .switch a{color:var(--primary);cursor:pointer;font-weight:600}
+.auth-error{color:var(--error);font-size:13px;margin-bottom:12px;display:none}
+
+/* ═══ HOME / DASHBOARD ═══ */
+.cam-section{display:flex;flex-direction:column;align-items:center;text-align:center;gap:32px;margin-top:12px}
+@media(min-width:768px){.cam-section{flex-direction:row;text-align:left;align-items:flex-start;gap:40px}}
+.cam-wrap{position:relative;flex-shrink:0}
+.cam-glow{position:absolute;inset:-20px;background:var(--tertiary);opacity:0.08;filter:blur(80px);border-radius:50%;pointer-events:none}
+.cam-ring{width:224px;height:224px;border-radius:50%;border:4px solid var(--outline-variant);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#000;transition:border-color 0.5s,box-shadow 0.5s}
+.cam-ring.detecting{border-color:var(--tertiary);box-shadow:0 0 30px rgba(255,228,131,0.4)}
+@media(min-width:768px){.cam-ring{width:260px;height:260px}}
+.cam-ring video,.cam-ring canvas{width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0}
+.cam-ring video{transform:scaleX(-1)}
+.mood-tag{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);background:rgba(44,43,51,0.85);backdrop-filter:blur(12px);padding:8px 24px;border-radius:9999px;border:1px solid rgba(255,255,255,0.1);white-space:nowrap;font-weight:700;font-size:18px;color:var(--tertiary);transition:all 0.3s}
+
+.emo-grid{width:100%;display:grid;grid-template-columns:1fr;gap:16px;margin-top:28px}
+@media(min-width:640px){.emo-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:768px){.emo-grid{margin-top:0}}
+.emo-panel{padding:24px}
+.emo-panel h3{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--on-surface-variant);margin-bottom:20px}
+.ebar{margin-bottom:16px}.ebar:last-child{margin-bottom:0}
+.ebar-top{display:flex;justify-content:space-between;font-size:12px;font-weight:500;margin-bottom:6px}
+.ebar-track{height:6px;width:100%;background:var(--surface-highest);border-radius:9999px;overflow:hidden}
+.ebar-fill{height:100%;border-radius:9999px;transition:width 0.5s ease}
+
+/* Rec section */
+.rec-section{margin-top:44px}
+.rec-section h2{font-size:clamp(20px,4vw,28px);font-weight:700;letter-spacing:-0.02em;margin-bottom:20px}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(min-width:768px){.rec-grid{grid-template-columns:repeat(4,1fr)}}
+.rec-card{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;padding:20px;min-height:160px;display:flex;flex-direction:column;justify-content:flex-end;transition:transform 0.2s}
+.rec-card:hover{transform:translateY(-4px)}
+.rec-card .rc-title{font-weight:700;font-size:14px;color:#fff}
+.rec-card .rc-artist{font-size:12px;color:var(--on-surface-variant);margin-top:2px}
+.rec-card .rc-score{font-size:10px;color:var(--tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-top:6px}
+.rec-card .rc-genre{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:9999px;background:rgba(0,0,0,0.4);font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary)}
+.rec-empty{grid-column:1/-1;text-align:center;padding:40px;color:var(--on-surface-variant)}
+
+/* Status indicator */
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.status-dot.connected{background:#4ade80}.status-dot.disconnected{background:var(--error)}
+.status-bar{font-size:11px;color:var(--on-surface-variant);display:flex;align-items:center;gap:12px;margin-bottom:20px}
+
+/* ═══ PLAYLISTS PAGE ═══ */
+.pl-list{display:grid;grid-template-columns:1fr;gap:16px;margin-top:24px}
+@media(min-width:640px){.pl-list{grid-template-columns:1fr 1fr}}
+.pl-card{padding:24px;cursor:pointer;transition:background 0.2s}
+.pl-card:hover{background:var(--surface-high)}
+.pl-card h4{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.pl-card p{font-size:13px;color:var(--on-surface-variant)}
+.pl-card .pl-meta{display:flex;gap:12px;margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--on-surface-variant)}
+.pl-card .pl-mood{color:var(--tertiary)}
+.create-pl-form{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.create-pl-form input{flex:1;min-width:200px;padding:12px 16px;border-radius:12px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);font-size:14px;outline:none;font-family:inherit}
+.create-pl-form input:focus{border-color:var(--primary)}
+
+/* Toast */
+.toast{position:fixed;top:20px;right:20px;z-index:200;padding:14px 24px;border-radius:12px;background:var(--primary);color:var(--on-primary);font-weight:600;font-size:14px;transform:translateX(120%);transition:transform 0.3s}
+.toast.show{transform:translateX(0)}
+
+/* Card colors for recs */
+.mood-happy{background:linear-gradient(135deg,rgba(255,228,131,0.15),rgba(255,228,131,0.05))}
+.mood-sad{background:linear-gradient(135deg,rgba(0,227,253,0.15),rgba(0,227,253,0.05))}
+.mood-angry{background:linear-gradient(135deg,rgba(255,110,132,0.15),rgba(255,110,132,0.05))}
+.mood-calm{background:linear-gradient(135deg,rgba(182,160,255,0.15),rgba(182,160,255,0.05))}
+.mood-energetic{background:linear-gradient(135deg,rgba(0,227,253,0.1),rgba(255,228,131,0.1))}
+.mood-neutral{background:linear-gradient(135deg,rgba(172,170,177,0.1),rgba(172,170,177,0.05))}
+.mood-fear{background:linear-gradient(135deg,rgba(118,116,123,0.15),rgba(118,116,123,0.05))}
+
+/* Track cards with album art */
+.track-card{display:flex;align-items:center;gap:14px;padding:14px;transition:background 0.2s;cursor:pointer;border-radius:12px}
+.track-card:hover{background:var(--surface-high)}
+.track-card.playing{background:rgba(182,160,255,0.15);border:1px solid rgba(182,160,255,0.3)}
+.tc-art{width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;position:relative}
+.tc-art img{width:100%;height:100%;object-fit:cover}
+.tc-art .play-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;font-size:22px;color:#fff}
+.track-card:hover .play-overlay{opacity:1}
+.track-card.playing .play-overlay{opacity:1;background:rgba(182,160,255,0.4)}
+.tc-info{flex:1;min-width:0}
+.tc-info .tc-title{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-info .tc-artist{font-size:12px;color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-info .tc-album{font-size:11px;color:var(--outline);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.tc-dur{font-size:11px;color:var(--on-surface-variant);flex-shrink:0}
+
+/* Track list grid */
+.track-list{display:flex;flex-direction:column;gap:4px}
+
+/* Now playing bar */
+.np-bar{position:fixed;bottom:60px;left:0;right:0;z-index:45;padding:12px 20px;display:flex;align-items:center;gap:14px;border-top:1px solid var(--glass-border);background:rgba(14,14,19,0.95);backdrop-filter:blur(30px);transform:translateY(100%);transition:transform 0.3s}
+.np-bar.active{transform:translateY(0)}
+@media(min-width:768px){.np-bar{bottom:0;left:260px}}
+.np-art{width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0}
+.np-art img{width:100%;height:100%;object-fit:cover}
+.np-info{flex:1;min-width:0}
+.np-info .np-title{font-weight:700;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-info .np-artist{font-size:12px;color:var(--on-surface-variant)}
+.np-controls{display:flex;align-items:center;gap:8px}
+.np-controls button{background:none;border:none;color:var(--on-surface);font-size:18px;cursor:pointer;padding:8px;border-radius:50%;transition:background 0.2s}
+.np-controls button:hover{background:rgba(255,255,255,0.1)}
+.np-play{background:var(--primary) !important;color:var(--on-primary) !important;width:40px;height:40px;border-radius:50% !important;display:flex;align-items:center;justify-content:center;font-size:18px}
+.np-progress{position:absolute;top:0;left:0;right:0;height:3px;background:var(--surface-highest)}
+.np-progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:width 0.3s}
+
+/* Search bar */
+.search-wrap{display:flex;gap:12px;margin:20px 0}
+.search-wrap input{flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);font-size:14px;outline:none;font-family:inherit}
+.search-wrap input:focus{border-color:var(--primary)}
+
+/* Section tabs */
+.sec-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.sec-tab{padding:8px 18px;border-radius:9999px;border:1px solid var(--outline-variant);background:none;color:var(--on-surface-variant);font-size:13px;transition:all 0.2s;font-family:inherit}
+.sec-tab.active{background:rgba(182,160,255,0.2);color:var(--primary);border-color:var(--primary)}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--outline-variant);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADD TO PLAYLIST MODAL -->
+<div id="add-pl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px">
+  <div class="glass" style="width:100%;max-width:400px;padding:32px;border-radius:24px">
+    <h3 class="hl" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">Add to Playlist</h3>
+    <p id="add-pl-track-name" style="color:var(--on-surface-variant);font-size:13px;margin-bottom:20px"></p>
+    <div id="add-pl-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <input type="text" id="add-pl-new-name" placeholder="Or create new playlist..." style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);font-size:13px;outline:none;font-family:inherit"/>
+      <button class="btn-grad hl" onclick="createAndAddToPlaylist()" style="padding:10px 16px;font-size:12px">Create & Add</button>
+    </div>
+    <button onclick="closeAddToPlaylist()" style="width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--outline-variant);background:none;color:var(--on-surface-variant);font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══ AUTH MODAL ═══ -->
+<div class="auth-overlay" id="auth-overlay">
+<div class="glass auth-card">
+  <div id="auth-login">
+    <h2 class="hl">Welcome back</h2>
+    <p>Sign in to MoodTunes</p>
+    <div class="auth-error" id="login-error"></div>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="email"/>
+    <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password"/>
+    <button class="btn-grad hl" onclick="doLogin()">Sign In</button>
+    <div class="switch">Don't have an account? <a onclick="showRegister()">Sign up</a></div>
+  </div>
+  <div id="auth-register" style="display:none">
+    <h2 class="hl">Create account</h2>
+    <p>Join MoodTunes</p>
+    <div class="auth-error" id="register-error"></div>
+    <input type="text" id="reg-username" placeholder="Username" autocomplete="username"/>
+    <input type="email" id="reg-email" placeholder="Email" autocomplete="email"/>
+    <input type="password" id="reg-pass" placeholder="Password (8+ characters)" autocomplete="new-password"/>
+    <input type="text" id="reg-display" placeholder="Display name (optional)"/>
+    <button class="btn-grad hl" onclick="doRegister()">Create Account</button>
+    <div class="switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+  </div>
+</div>
+</div>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-logo"><div class="s-logo-icon hl">♪</div><div><h1 class="hl">MoodTunes</h1><span class="lb">Music that feels you</span></div></div>
+  <nav class="s-nav" id="side-nav">
+    <a class="hl active" data-page="home"><span>⌂</span> Home</a>
+    <a class="hl" data-page="playlists"><span>♫</span> Playlists</a>
+    <a class="hl" onclick="doLogout()"><span>↪</span> Logout</a>
+  </nav>
+  <div class="glass" style="padding:16px;margin-top:auto">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);margin-bottom:4px" class="lb">Signed in as</div>
+    <div style="font-weight:700;font-size:14px;color:#fff" class="hl" id="sidebar-user">—</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+<header class="m-header">
+  <h1 class="hl" style="font-size:18px;color:#fff">MoodTunes</h1>
+  <span id="mobile-user" style="font-size:12px;color:var(--primary)"></span>
+</header>
+
+<!-- ═══ HOME PAGE ═══ -->
+<div class="page active" id="page-home">
+  <div class="status-bar">
+    <span><span class="status-dot disconnected" id="ws-dot"></span><span id="ws-status">Disconnected</span></span>
+    <span id="detection-count">0 detections</span>
+  </div>
+
+  <section class="cam-section">
+    <div class="cam-wrap">
+      <div class="cam-glow"></div>
+      <div class="cam-ring" id="cam-ring">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="capture-canvas" style="display:none"></canvas>
+      </div>
+      <div class="mood-tag hl" id="mood-tag">Start camera</div>
+    </div>
+
+    <div style="flex:1;width:100%">
+      <button class="btn-grad hl" id="cam-btn" onclick="toggleCamera()" style="margin-bottom:20px">Start Webcam</button>
+
+      <div class="emo-grid">
+        <div class="glass emo-panel">
+          <h3 class="hl">Positive Indicators</h3>
+          <div class="ebar"><div class="ebar-top"><span>Happy</span><span style="color:var(--tertiary)" id="score-happy">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-happy" style="width:0%;background:var(--tertiary)"></div></div></div>
+          <div class="ebar"><div class="ebar-top"><span>Neutral</span><span style="color:var(--on-surface-variant)" id="score-neutral">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-neutral" style="width:0%;background:var(--on-surface-variant)"></div></div></div>
+          <div class="ebar"><div class="ebar-top"><span>Surprise</span><span style="color:var(--secondary)" id="score-surprise">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-surprise" style="width:0%;background:var(--secondary)"></div></div></div>
+        </div>
+        <div class="glass emo-panel">
+          <h3 class="hl">Negative Indicators</h3>
+          <div class="ebar"><div class="ebar-top"><span>Sad</span><span style="color:var(--on-surface-variant)" id="score-sad">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-sad" style="width:0%;background:var(--secondary)"></div></div></div>
+          <div class="ebar"><div class="ebar-top"><span>Angry</span><span style="color:var(--error)" id="score-angry">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-angry" style="width:0%;background:var(--error)"></div></div></div>
+          <div class="ebar"><div class="ebar-top"><span>Fear</span><span style="color:var(--on-surface-variant)" id="score-fear">0%</span></div><div class="ebar-track"><div class="ebar-fill" id="bar-fear" style="width:0%;background:var(--outline)"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rec-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 class="hl" id="rec-title">Music for Your Mood</h2>
+    </div>
+
+    <div class="sec-tabs">
+      <button class="sec-tab active hl" onclick="switchTab('mood',this)">Mood Mix</button>
+      <button class="sec-tab hl" onclick="switchTab('chart',this)">Trending</button>
+      <button class="sec-tab hl" onclick="switchTab('search',this)">Search</button>
+    </div>
+
+    <div class="search-wrap" id="search-wrap" style="display:none">
+      <input type="text" id="search-input" placeholder="Search songs, artists..." onkeydown="if(event.key==='Enter')doSearch()"/>
+      <button class="btn-grad hl" onclick="doSearch()" style="padding:12px 20px">Search</button>
+    </div>
+
+    <div class="track-list" id="track-list">
+      <div class="rec-empty glass">Click "Mood Mix" to get personalized music based on your detected emotion</div>
+    </div>
+  </section>
+</div>
+
+<!-- NOW PLAYING BAR -->
+<div class="np-bar glass" id="np-bar">
+  <div class="np-progress"><div class="np-progress-bar" id="np-progress"></div></div>
+  <div class="np-art"><img id="np-art-img" src="" alt=""/></div>
+  <div class="np-info">
+    <div class="np-title hl" id="np-title">—</div>
+    <div class="np-artist" id="np-artist">—</div>
+  </div>
+  <div class="np-controls">
+    <button onclick="prevTrack()">⏮</button>
+    <button class="np-play" id="np-play-btn" onclick="togglePlay()">▶</button>
+    <button onclick="nextTrack()">⏭</button>
+  </div>
+</div>
+
+<!-- ═══ PLAYLISTS PAGE ═══ -->
+<div class="page" id="page-playlists">
+  <h2 class="hl" style="font-size:clamp(28px,5vw,40px);font-weight:700;color:#fff">Your <span style="color:var(--primary)">Playlists</span></h2>
+  <p style="color:var(--on-surface-variant);margin-top:8px">Create and manage your mood-based playlists</p>
+
+  <div class="create-pl-form" style="margin-top:28px">
+    <input type="text" id="new-pl-name" placeholder="New playlist name..."/>
+    <input type="text" id="new-pl-desc" placeholder="Description (optional)" style="min-width:150px"/>
+    <button class="btn-grad hl" onclick="createPlaylist()">Create</button>
+  </div>
+
+  <div class="pl-list" id="pl-list">
+    <div class="rec-empty glass">No playlists yet. Create one above!</div>
+  </div>
+
+  <!-- Playlist Detail View (hidden by default) -->
+  <div id="pl-detail" style="display:none;margin-top:28px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <h3 class="hl" id="pl-detail-name" style="font-size:28px;font-weight:700;color:#fff"></h3>
+        <p id="pl-detail-desc" style="color:var(--on-surface-variant);font-size:14px;margin-top:4px"></p>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:12px;color:var(--on-surface-variant)">
+          <span id="pl-detail-count"></span>
+          <span id="pl-detail-mood" style="color:var(--tertiary)"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-grad hl" onclick="editPlaylistPrompt()" style="padding:10px 18px;font-size:12px">Edit</button>
+        <button onclick="deletePlaylistPrompt()" style="padding:10px 18px;font-size:12px;border-radius:14px;border:1px solid var(--error);background:none;color:var(--error);font-weight:700;cursor:pointer">Delete</button>
+        <button onclick="closePlaylistDetail()" style="padding:10px 18px;font-size:12px;border-radius:14px;border:1px solid var(--outline-variant);background:none;color:var(--on-surface-variant);font-weight:700;cursor:pointer">Back</button>
+      </div>
+    </div>
+
+    <!-- Add track to playlist -->
+    <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+      <input type="text" id="pl-add-search" placeholder="Search song to add..." style="flex:1;min-width:200px;padding:12px 16px;border-radius:12px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);font-size:14px;outline:none;font-family:inherit"/>
+      <button class="btn-grad hl" onclick="searchToAdd()" style="padding:10px 18px;font-size:12px">Search</button>
+    </div>
+
+    <!-- Search results for adding -->
+    <div id="pl-search-results" style="margin-top:12px"></div>
+
+    <!-- Current tracks in playlist -->
+    <h4 class="hl" style="margin-top:24px;font-size:16px;color:var(--on-surface-variant)">Tracks in Playlist</h4>
+    <div id="pl-detail-tracks" style="margin-top:12px" class="track-list"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="b-nav" id="bot-nav">
+  <a class="active" data-page="home"><span>⌂</span><span class="hl">Home</span></a>
+  <a data-page="playlists"><span>♫</span><span class="hl">Playlists</span></a>
+  <a onclick="doLogout()"><span>↪</span><span class="hl">Logout</span></a>
+</nav>
+
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const API = 'http://localhost:8000/api/v1';
+const WS_URL = 'ws://localhost:8000/ws/mood';
+let token = localStorage.getItem('mt_token') || null;
+let currentUser = null;
+let ws = null;
+let camStream = null;
+let captureInterval = null;
+let detectionCount = 0;
+let lastScores = null;
+let currentMood = 'neutral';
+const EMOJI_MAP = {happy:'😊',sad:'😢',angry:'😠',fear:'😨',surprise:'😲',neutral:'😐',disgust:'🤢'};
+
+// Audio player state
+let audio = new Audio();
+let playlist = [];
+let currentTrackIdx = -1;
+let isPlaying = false;
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+function showLogin(){document.getElementById('auth-register').style.display='none';document.getElementById('auth-login').style.display='block'}
+function showRegister(){document.getElementById('auth-login').style.display='none';document.getElementById('auth-register').style.display='block'}
+
+async function doRegister(){
+  const errEl=document.getElementById('register-error');
+  errEl.style.display='none';
+  const body={
+    email:document.getElementById('reg-email').value,
+    username:document.getElementById('reg-username').value,
+    password:document.getElementById('reg-pass').value,
+    display_name:document.getElementById('reg-display').value||null
+  };
+  try{
+    const r=await fetch(API+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok){errEl.textContent=d.detail||'Registration failed';errEl.style.display='block';return}
+    showToast('Account created! Signing in...');
+    document.getElementById('login-email').value=body.email;
+    document.getElementById('login-pass').value=body.password;
+    showLogin();
+    await doLogin();
+  }catch(e){errEl.textContent='Network error';errEl.style.display='block'}
+}
+
+async function doLogin(){
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  const body={email:document.getElementById('login-email').value,password:document.getElementById('login-pass').value};
+  try{
+    const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok){errEl.textContent=d.detail||'Login failed';errEl.style.display='block';return}
+    token=d.access_token;
+    localStorage.setItem('mt_token',token);
+    await loadUser();
+    document.getElementById('auth-overlay').classList.add('hidden');
+    showToast('Welcome back!');
+    loadMoodTracks();
+  }catch(e){errEl.textContent='Network error';errEl.style.display='block'}
+}
+
+function doLogout(){
+  token=null;localStorage.removeItem('mt_token');
+  stopCamera();audio.pause();
+  document.getElementById('np-bar').classList.remove('active');
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  showLogin();
+}
+
+async function loadUser(){
+  try{
+    const r=await fetch(API+'/auth/me',{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){doLogout();return}
+    currentUser=await r.json();
+    document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.username;
+    document.getElementById('mobile-user').textContent=currentUser.display_name||currentUser.username;
+  }catch(e){doLogout()}
+}
+
+async function authFetch(url,opts={}){
+  opts.headers={...opts.headers,'Authorization':'Bearer '+token,'Content-Type':'application/json'};
+  return fetch(url,opts);
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+page);
+  if(el)el.classList.add('active');
+  document.querySelectorAll('#side-nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===page));
+  document.querySelectorAll('#bot-nav a[data-page]').forEach(a=>a.classList.toggle('active',a.dataset.page===page));
+  if(page==='playlists')loadPlaylists();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',()=>{if(el.dataset.page)navigate(el.dataset.page)}));
+
+// ═══════════════════════════════════════
+// WEBCAM + WEBSOCKET
+// ═══════════════════════════════════════
+async function toggleCamera(){
+  if(camStream){stopCamera();return}
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:320,facingMode:'user'},audio:false});
+    document.getElementById('webcam').srcObject=camStream;
+    document.getElementById('cam-btn').textContent='Stop Webcam';
+    document.getElementById('cam-ring').classList.add('detecting');
+    connectWebSocket();
+  }catch(e){showToast('Camera access denied');console.error(e)}
+}
+
+function stopCamera(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null}
+  if(captureInterval){clearInterval(captureInterval);captureInterval=null}
+  if(ws){ws.close();ws=null}
+  document.getElementById('webcam').srcObject=null;
+  document.getElementById('cam-btn').textContent='Start Webcam';
+  document.getElementById('cam-ring').classList.remove('detecting');
+  updateWSStatus(false);
+}
+
+function connectWebSocket(){
+  ws=new WebSocket(WS_URL);
+  ws.onopen=()=>{
+    updateWSStatus(true);
+    captureInterval=setInterval(captureAndSend,333);
+  };
+  ws.onmessage=(e)=>{
+    const data=JSON.parse(e.data);
+    if(data.error)return;
+    detectionCount++;
+    document.getElementById('detection-count').textContent=detectionCount+' detections';
+    lastScores=data.scores;
+    updateEmotionUI(data);
+
+    // Auto-refresh music every 30 detections (~10 seconds)
+    if(detectionCount%30===0 && data.emotion!=='neutral' && data.confidence>0.3){
+      const newMood=data.emotion;
+      if(newMood!==currentMood){
+        currentMood=newMood;
+        loadMoodTracks();
+      }
+    }
+  };
+  ws.onclose=()=>{updateWSStatus(false);if(captureInterval){clearInterval(captureInterval);captureInterval=null}};
+  ws.onerror=()=>{updateWSStatus(false)};
+}
+
+function captureAndSend(){
+  if(!ws||ws.readyState!==WebSocket.OPEN||!camStream)return;
+  const video=document.getElementById('webcam');
+  const canvas=document.getElementById('capture-canvas');
+  canvas.width=320;canvas.height=320;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0,320,320);
+  const b64=canvas.toDataURL('image/jpeg',0.7).split(',')[1];
+  ws.send(JSON.stringify({image:b64}));
+}
+
+function updateWSStatus(connected){
+  const dot=document.getElementById('ws-dot');
+  const txt=document.getElementById('ws-status');
+  dot.className='status-dot '+(connected?'connected':'disconnected');
+  txt.textContent=connected?'Live':'Disconnected';
+}
+
+function updateEmotionUI(data){
+  const emotions=['happy','neutral','surprise','sad','angry','fear','disgust'];
+  emotions.forEach(em=>{
+    const pct=Math.round((data.scores[em]||0)*100);
+    const scoreEl=document.getElementById('score-'+em);
+    const barEl=document.getElementById('bar-'+em);
+    if(scoreEl)scoreEl.textContent=pct+'%';
+    if(barEl)barEl.style.width=pct+'%';
+  });
+
+  const emoji=EMOJI_MAP[data.emotion]||'😐';
+  const conf=Math.round(data.confidence*100);
+  document.getElementById('mood-tag').textContent=emoji+' '+data.emotion.charAt(0).toUpperCase()+data.emotion.slice(1)+' — '+conf+'%';
+  document.getElementById('rec-title').textContent=(EMOJI_MAP[data.emotion]||'')+' Music for Your '+data.emotion.charAt(0).toUpperCase()+data.emotion.slice(1)+' Mood';
+}
+
+// ═══════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════
+function switchTab(tab,btn){
+  document.querySelectorAll('.sec-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('search-wrap').style.display=tab==='search'?'flex':'none';
+
+  if(tab==='mood')loadMoodTracks();
+  else if(tab==='chart')loadChartTracks();
+  else if(tab==='search'){document.getElementById('search-input').focus()}
+}
+
+// ═══════════════════════════════════════
+// DEEZER MUSIC
+// ═══════════════════════════════════════
+async function loadMoodTracks(){
+  const list=document.getElementById('track-list');
+  list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Loading mood tracks...</div>';
+
+  let scores=lastScores;
+  if(!scores||Object.values(scores).every(v=>v===0)){
+    scores={angry:0,disgust:0,fear:0,happy:0,neutral:1,sad:0,surprise:0};
+  }
+
+  try{
+    const r=await authFetch(API+'/deezer/recommend',{
+      method:'POST',body:JSON.stringify({emotion_scores:scores,limit:20})
+    });
+    if(!r.ok)throw new Error('Failed');
+    const tracks=await r.json();
+    playlist=tracks;
+    renderTrackList(tracks);
+  }catch(e){
+    list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Could not load tracks. Make sure the API is running.</div>';
+  }
+}
+
+async function loadChartTracks(){
+  const list=document.getElementById('track-list');
+  list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Loading trending tracks...</div>';
+
+  try{
+    const r=await authFetch(API+'/deezer/chart?limit=20');
+    if(!r.ok)throw new Error('Failed');
+    const tracks=await r.json();
+    playlist=tracks;
+    renderTrackList(tracks);
+  }catch(e){
+    list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Could not load charts.</div>';
+  }
+}
+
+async function doSearch(){
+  const q=document.getElementById('search-input').value.trim();
+  if(!q){showToast('Type something to search');return}
+  const list=document.getElementById('track-list');
+  list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Searching...</div>';
+
+  try{
+    const r=await authFetch(API+'/deezer/search?q='+encodeURIComponent(q)+'&limit=20');
+    if(!r.ok)throw new Error('Failed');
+    const tracks=await r.json();
+    playlist=tracks;
+    renderTrackList(tracks);
+    if(tracks.length===0)list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">No results found</div>';
+  }catch(e){
+    list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">Search failed.</div>';
+  }
+}
+
+function renderTrackList(tracks){
+  const list=document.getElementById('track-list');
+  if(!tracks||tracks.length===0){
+    list.innerHTML='<div class="rec-empty glass" style="padding:20px;text-align:center">No tracks found</div>';
+    return;
+  }
+  list.innerHTML=tracks.map((t,i)=>{
+    const mins=Math.floor(t.duration/60);
+    const secs=String(t.duration%60).padStart(2,'0');
+    const isActive=currentTrackIdx===i&&isPlaying;
+    return `<div class="track-card glass ${isActive?'playing':''}" id="track-${i}">
+      <div class="tc-art" onclick="playTrackAt(${i})">
+        <img src="${t.cover_url}" alt="" loading="lazy"/>
+        <div class="play-overlay">${isActive?'⏸':'▶'}</div>
+      </div>
+      <div class="tc-info" onclick="playTrackAt(${i})" style="cursor:pointer">
+        <div class="tc-title">${t.title}</div>
+        <div class="tc-artist">${t.artist}</div>
+        <div class="tc-album">${t.album}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <div class="tc-dur">${mins}:${secs}</div>
+        <button onclick="showAddToPlaylist(${i})" style="padding:5px 10px;border-radius:8px;border:1px solid var(--primary);background:none;color:var(--primary);font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">+ Playlist</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// AUDIO PLAYER
+// ═══════════════════════════════════════
+function playTrackAt(idx){
+  if(idx===currentTrackIdx&&isPlaying){
+    audio.pause();isPlaying=false;
+    updatePlayerUI();return;
+  }
+  if(idx===currentTrackIdx&&!isPlaying){
+    audio.play();isPlaying=true;
+    updatePlayerUI();return;
+  }
+
+  currentTrackIdx=idx;
+  const track=playlist[idx];
+  if(!track||!track.preview_url){showToast('No preview available');return}
+
+  audio.src=track.preview_url;
+  audio.play();
+  isPlaying=true;
+  updatePlayerUI();
+}
+
+function togglePlay(){
+  if(!playlist.length)return;
+  if(currentTrackIdx===-1){playTrackAt(0);return}
+  if(isPlaying){audio.pause();isPlaying=false}
+  else{audio.play();isPlaying=true}
+  updatePlayerUI();
+}
+
+function nextTrack(){
+  if(!playlist.length)return;
+  const next=(currentTrackIdx+1)%playlist.length;
+  playTrackAt(next);
+}
+
+function prevTrack(){
+  if(!playlist.length)return;
+  const prev=currentTrackIdx<=0?playlist.length-1:currentTrackIdx-1;
+  playTrackAt(prev);
+}
+
+function updatePlayerUI(){
+  const bar=document.getElementById('np-bar');
+  const track=playlist[currentTrackIdx];
+
+  if(!track){bar.classList.remove('active');return}
+
+  bar.classList.add('active');
+  document.getElementById('np-art-img').src=track.cover_url;
+  document.getElementById('np-title').textContent=track.title;
+  document.getElementById('np-artist').textContent=track.artist;
+  document.getElementById('np-play-btn').textContent=isPlaying?'⏸':'▶';
+
+  // Update track list highlights
+  document.querySelectorAll('.track-card').forEach((el,i)=>{
+    el.classList.toggle('playing',i===currentTrackIdx&&isPlaying);
+    const ov=el.querySelector('.play-overlay');
+    if(ov)ov.textContent=(i===currentTrackIdx&&isPlaying)?'⏸':'▶';
+  });
+}
+
+// Audio events
+audio.addEventListener('timeupdate',()=>{
+  if(audio.duration){
+    const pct=(audio.currentTime/audio.duration)*100;
+    document.getElementById('np-progress').style.width=pct+'%';
+  }
+});
+audio.addEventListener('ended',()=>{nextTrack()});
+
+// ═══════════════════════════════════════
+// PLAYLISTS (Full CRUD)
+// ═══════════════════════════════════════
+let currentPlaylistId = null;
+let currentPlaylistData = null;
+
+async function loadPlaylists(){
+  document.getElementById('pl-detail').style.display='none';
+  document.getElementById('pl-list').style.display='';
+  try{
+    const r=await authFetch(API+'/playlists/');
+    const d=await r.json();
+    const list=document.getElementById('pl-list');
+    if(!d||d.length===0){list.innerHTML='<div class="rec-empty glass">No playlists yet. Create one above!</div>';return}
+    list.innerHTML=d.map(p=>`<div class="glass pl-card" onclick="viewPlaylist('${p.id}')">
+      <h4 class="hl">${p.name}</h4>
+      <p>${p.description||'No description'}</p>
+      <div class="pl-meta">
+        <span>${p.track_count} tracks</span>
+        ${p.mood_tag?'<span class="pl-mood">'+p.mood_tag+'</span>':''}
+        <span>${new Date(p.created_at).toLocaleDateString()}</span>
+      </div>
+    </div>`).join('');
+  }catch(e){console.error(e)}
+}
+
+async function createPlaylist(){
+  const nameEl=document.getElementById('new-pl-name');
+  const descEl=document.getElementById('new-pl-desc');
+  const name=nameEl.value.trim();
+  if(!name){showToast('Enter a playlist name');return}
+  try{
+    const r=await authFetch(API+'/playlists/',{method:'POST',body:JSON.stringify({
+      name:name,
+      description:descEl.value.trim()||null,
+      mood_tag:currentMood
+    })});
+    if(!r.ok){const d=await r.json();showToast(d.detail||'Error');return}
+    nameEl.value='';descEl.value='';
+    showToast('Playlist created!');
+    loadPlaylists();
+  }catch(e){showToast('Network error')}
+}
+
+async function viewPlaylist(id){
+  currentPlaylistId=id;
+  try{
+    const r=await authFetch(API+'/playlists/'+id);
+    if(!r.ok){showToast('Playlist not found');return}
+    currentPlaylistData=await r.json();
+
+    document.getElementById('pl-list').style.display='none';
+    document.getElementById('pl-detail').style.display='block';
+    document.getElementById('pl-detail-name').textContent=currentPlaylistData.name;
+    document.getElementById('pl-detail-desc').textContent=currentPlaylistData.description||'No description';
+    document.getElementById('pl-detail-mood').textContent=currentPlaylistData.mood_tag||'';
+    document.getElementById('pl-search-results').innerHTML='';
+
+    // Load locally saved tracks
+    const savedTracks = JSON.parse(localStorage.getItem('mt_pl_tracks_'+id) || '[]');
+    document.getElementById('pl-detail-count').textContent=savedTracks.length+' tracks';
+    renderPlaylistDetailTracks(savedTracks);
+  }catch(e){console.error(e)}
+}
+
+function renderPlaylistDetailTracks(tracks){
+  const container=document.getElementById('pl-detail-tracks');
+  if(!tracks||tracks.length===0){
+    container.innerHTML='<div class="rec-empty glass" style="padding:16px;text-align:center">No tracks yet. Search and add songs above, or use "+ Playlist" on the Home page!</div>';
+    return;
+  }
+  container.innerHTML=tracks.map((t,i)=>{
+    const mins=Math.floor(t.duration/60);
+    const secs=String(t.duration%60).padStart(2,'0');
+    return `<div class="track-card glass" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;cursor:pointer" onclick="playLocalTrack(${i},'${currentPlaylistId}')">
+        <div class="tc-art" style="width:48px;height:48px;flex-shrink:0;position:relative">
+          <img src="${t.cover_url||''}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:8px;object-fit:cover"/>
+          <div class="play-overlay" style="border-radius:8px">▶</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="tc-title">${t.title}</div>
+          <div class="tc-artist">${t.artist}${t.album?' · '+t.album:''}</div>
+        </div>
+        <div class="tc-dur">${mins}:${secs}</div>
+      </div>
+      <button onclick="event.stopPropagation();removeLocalTrack('${currentPlaylistId}',${i})" style="padding:6px 14px;border-radius:10px;border:1px solid var(--error);background:none;color:var(--error);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:12px">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function playLocalTrack(idx, plId){
+  const savedTracks = JSON.parse(localStorage.getItem('mt_pl_tracks_'+plId) || '[]');
+  if(!savedTracks[idx])return;
+
+  // Convert to player format and set as current playlist
+  playlist = savedTracks.map(t => ({
+    ...t,
+    cover_url: t.cover_url || '',
+    cover_url_big: t.cover_url_big || t.cover_url || '',
+    preview_url: t.preview_url || '',
+    link: t.link || '',
+  }));
+
+  currentTrackIdx = idx;
+  const t = playlist[idx];
+
+  if(!t.preview_url){showToast('No preview available');return}
+
+  audio.src = t.preview_url;
+  audio.play().then(()=>{
+    isPlaying = true;
+    updatePlayerUI();
+    showToast('Playing: '+t.title);
+  }).catch(e=>{
+    showToast('Playback failed — try clicking again');
+    console.error(e);
+  });
+}
+
+function removeLocalTrack(plId, idx){
+  if(!confirm('Remove this track?'))return;
+  let savedTracks = JSON.parse(localStorage.getItem('mt_pl_tracks_'+plId) || '[]');
+  savedTracks.splice(idx, 1);
+  localStorage.setItem('mt_pl_tracks_'+plId, JSON.stringify(savedTracks));
+  showToast('Track removed');
+  document.getElementById('pl-detail-count').textContent=savedTracks.length+' tracks';
+  renderPlaylistDetailTracks(savedTracks);
+}
+
+function closePlaylistDetail(){
+  document.getElementById('pl-detail').style.display='none';
+  currentPlaylistId=null;
+  currentPlaylistData=null;
+  loadPlaylists();
+}
+
+async function editPlaylistPrompt(){
+  const newName=prompt('New playlist name:',currentPlaylistData.name);
+  if(!newName||!newName.trim())return;
+  const newDesc=prompt('New description:',currentPlaylistData.description||'');
+  try{
+    const r=await authFetch(API+'/playlists/'+currentPlaylistId,{
+      method:'PATCH',
+      body:JSON.stringify({name:newName.trim(),description:newDesc||null})
+    });
+    if(!r.ok){showToast('Update failed');return}
+    showToast('Playlist updated!');
+    viewPlaylist(currentPlaylistId);
+  }catch(e){showToast('Network error')}
+}
+
+async function deletePlaylistPrompt(){
+  if(!confirm('Delete "'+currentPlaylistData.name+'"? This cannot be undone.'))return;
+  try{
+    const r=await authFetch(API+'/playlists/'+currentPlaylistId,{method:'DELETE'});
+    if(r.status===204||r.ok){
+      showToast('Playlist deleted');
+      closePlaylistDetail();
+    }else{showToast('Delete failed')}
+  }catch(e){showToast('Network error')}
+}
+
+// Store last search results for playback
+let plSearchResults = [];
+
+async function searchToAdd(){
+  const q=document.getElementById('pl-add-search').value.trim();
+  if(!q){showToast('Type a song name');return}
+  const container=document.getElementById('pl-search-results');
+  container.innerHTML='<div style="padding:12px;text-align:center;color:var(--on-surface-variant)">Searching...</div>';
+
+  try{
+    const r=await authFetch(API+'/deezer/search?q='+encodeURIComponent(q)+'&limit=8');
+    if(!r.ok)throw new Error();
+    const tracks=await r.json();
+    plSearchResults = tracks;
+    if(tracks.length===0){container.innerHTML='<div style="padding:12px;text-align:center;color:var(--on-surface-variant)">No results</div>';return}
+
+    container.innerHTML=tracks.map((t,i)=>{
+      const mins=Math.floor(t.duration/60);
+      const secs=String(t.duration%60).padStart(2,'0');
+      const trackData=JSON.stringify({id:t.id,title:t.title,artist:t.artist,album:t.album,cover_url:t.cover_url,preview_url:t.preview_url,duration:t.duration}).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+      return `<div class="track-card glass" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;cursor:pointer" onclick="playSearchResult(${i})">
+          <div class="tc-art" style="width:44px;height:44px;flex-shrink:0;position:relative">
+            <img src="${t.cover_url}" alt="" loading="lazy" style="width:44px;height:44px;border-radius:8px;object-fit:cover"/>
+            <div class="play-overlay" style="border-radius:8px">▶</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="tc-title">${t.title}</div>
+            <div class="tc-artist">${t.artist}</div>
+          </div>
+          <div class="tc-dur">${mins}:${secs}</div>
+        </div>
+        <button onclick="event.stopPropagation();addSearchResultToPlaylist(this)" data-track="${trackData}" style="padding:6px 14px;border-radius:10px;border:1px solid var(--primary);background:none;color:var(--primary);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;margin-left:12px">+ Add</button>
+      </div>`;
+    }).join('');
+  }catch(e){container.innerHTML='<div style="padding:12px;text-align:center;color:var(--on-surface-variant)">Search failed</div>'}
+}
+
+function addSearchResultToPlaylist(btn){
+  const trackData=JSON.parse(btn.getAttribute('data-track'));
+  let savedTracks=JSON.parse(localStorage.getItem('mt_pl_tracks_'+currentPlaylistId)||'[]');
+
+  if(savedTracks.find(t=>t.id===trackData.id)){
+    showToast('Already in this playlist');
+    return;
+  }
+
+  savedTracks.push(trackData);
+  localStorage.setItem('mt_pl_tracks_'+currentPlaylistId,JSON.stringify(savedTracks));
+  document.getElementById('pl-detail-count').textContent=savedTracks.length+' tracks';
+  renderPlaylistDetailTracks(savedTracks);
+  showToast('Added "'+trackData.title+'"!');
+  btn.textContent='Added';
+  btn.disabled=true;
+  btn.style.borderColor='var(--on-surface-variant)';
+  btn.style.color='var(--on-surface-variant)';
+}
+
+function playSearchResult(idx){
+  if(!plSearchResults[idx])return;
+  const t=plSearchResults[idx];
+  if(!t.preview_url){showToast('No preview available');return}
+
+  // Set search results as player playlist
+  playlist=plSearchResults.map(tr=>({
+    ...tr,
+    cover_url_big:tr.cover_url_big||tr.cover_url||'',
+  }));
+  currentTrackIdx=idx;
+  audio.src=t.preview_url;
+  audio.play().then(()=>{
+    isPlaying=true;
+    updatePlayerUI();
+    showToast('Playing: '+t.title);
+  }).catch(e=>{
+    showToast('Click again to play');
+  });
+}
+
+// ═══════════════════════════════════════
+// ADD TO PLAYLIST MODAL
+// ═══════════════════════════════════════
+let addTrackIdx = null;
+
+async function showAddToPlaylist(idx){
+  addTrackIdx = idx;
+  const track = playlist[idx];
+  if(!track) return;
+
+  const modal = document.getElementById('add-pl-modal');
+  document.getElementById('add-pl-track-name').textContent = '"' + track.title + '" by ' + track.artist;
+  modal.style.display = 'flex';
+
+  // Load user's playlists
+  try{
+    const r = await authFetch(API+'/playlists/');
+    const playlists = await r.json();
+    const container = document.getElementById('add-pl-list');
+
+    if(!playlists || playlists.length === 0){
+      container.innerHTML = '<div style="padding:12px;text-align:center;color:var(--on-surface-variant)">No playlists yet — create one below</div>';
+      return;
+    }
+
+    container.innerHTML = playlists.map(p => `<button onclick="addTrackToPlaylistByName('${p.id}','${p.name.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;border-radius:12px;border:1px solid var(--outline-variant);background:var(--surface-highest);color:var(--on-surface);cursor:pointer;font-family:inherit;text-align:left;transition:background 0.2s">
+      <div>
+        <div style="font-weight:700;font-size:14px">${p.name}</div>
+        <div style="font-size:11px;color:var(--on-surface-variant)">${p.track_count} tracks ${p.mood_tag ? '· '+p.mood_tag : ''}</div>
+      </div>
+      <span style="color:var(--primary);font-size:18px">+</span>
+    </button>`).join('');
+  }catch(e){
+    document.getElementById('add-pl-list').innerHTML = '<div style="padding:12px;color:var(--error)">Failed to load playlists</div>';
+  }
+}
+
+function closeAddToPlaylist(){
+  document.getElementById('add-pl-modal').style.display = 'none';
+  addTrackIdx = null;
+}
+
+async function addTrackToPlaylistByName(playlistId, playlistName){
+  const track = playlist[addTrackIdx];
+  if(!track){showToast('No track selected');return}
+
+  // Save track info to localStorage for the playlist (since iTunes IDs aren't in our DB)
+  let savedTracks = JSON.parse(localStorage.getItem('mt_pl_tracks_'+playlistId) || '[]');
+  
+  // Check duplicate
+  if(savedTracks.find(t => t.id === track.id)){
+    showToast('Already in "'+playlistName+'"');
+    return;
+  }
+
+  savedTracks.push({
+    id: track.id,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    cover_url: track.cover_url,
+    preview_url: track.preview_url,
+    duration: track.duration,
+  });
+  localStorage.setItem('mt_pl_tracks_'+playlistId, JSON.stringify(savedTracks));
+
+  showToast('Added to "'+playlistName+'"!');
+  closeAddToPlaylist();
+}
+
+async function createAndAddToPlaylist(){
+  const nameEl = document.getElementById('add-pl-new-name');
+  const name = nameEl.value.trim();
+  if(!name){showToast('Enter playlist name');return}
+
+  try{
+    const r = await authFetch(API+'/playlists/',{method:'POST',body:JSON.stringify({
+      name: name,
+      mood_tag: currentMood
+    })});
+    if(!r.ok){showToast('Failed to create');return}
+    const newPl = await r.json();
+    nameEl.value = '';
+    
+    // Add track to new playlist
+    await addTrackToPlaylistByName(newPl.id, newPl.name);
+  }catch(e){showToast('Network error')}
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+(async function init(){
+  if(token){
+    try{
+      const r=await fetch(API+'/auth/me',{headers:{'Authorization':'Bearer '+token}});
+      if(r.ok){
+        currentUser=await r.json();
+        document.getElementById('sidebar-user').textContent=currentUser.display_name||currentUser.username;
+        document.getElementById('mobile-user').textContent=currentUser.display_name||currentUser.username;
+        document.getElementById('auth-overlay').classList.add('hidden');
+        loadMoodTracks();
+        return;
+      }
+    }catch(e){}
+    token=null;localStorage.removeItem('mt_token');
+  }
+  document.getElementById('auth-overlay').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
